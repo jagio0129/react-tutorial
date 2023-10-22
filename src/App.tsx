@@ -3,19 +3,51 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
-export default function Board() {
-  const [xIsNext, setXIsNext]: any = useState(true)
-  const [squares, setSquares]: any = useState(Array(9).fill(null))
-  const winner: string | null = calculateWinner(squares)
-  let status: string
-  if (winner) {
-    status = "Winner: " + winner
-  } else {
-    status = "Next player: " + (xIsNext ? "X" : "◯")
+export default function Game() {
+  const [history, setHistory]: any = useState([Array(9).fill(null)])
+  const [currentMove, setCurrentMove]: any = useState(0)
+  const xIsNext: any = currentMove % 2 === 0
+  const currentSquares = history[currentMove]
+
+  function handlePlay(nextSquares: any) {
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
+    setHistory(nextHistory)
+    setCurrentMove(nextHistory.length - 1)
   }
 
+  function jumpTo(nextMove: any) {
+    setCurrentMove(nextMove)
+  }
+
+  const moves = history.map((move: any) => {
+    let description: string
+    if (move > 0) {
+      description = 'Go to move #' + move
+    } else {
+      description = 'Go to game start'
+    }
+    return (
+      <li key={move}>
+          <button onClick={() => jumpTo(move)}>{description}</button>
+      </li>
+    )
+  })
+
+  return (
+    <div className='game'>
+      <div className='game-board'>
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
+      </div>
+      <div className='game-info'>
+        <ol>{moves}</ol>
+      </div>
+    </div>
+  )
+}
+
+function Board({xIsNext, squares, onPlay}: any) {
   function handleClick(i: number) {
-    if(squares[i] || calculateWinner(squares)) {
+    if(calculateWinner(squares) || squares[i]) {
       return
     }
 
@@ -25,8 +57,15 @@ export default function Board() {
     } else {
       nextSquares[i] = "◯"
     }
-    setSquares(nextSquares)
-    setXIsNext(!xIsNext)
+    onPlay(nextSquares)
+  }
+
+  const winner: (string | null) = calculateWinner(squares)
+  let status: string
+  if (winner) {
+    status = 'Winner: ' + winner
+  } else {
+    status = 'Next player: ' + (xIsNext ? 'X' : '◯')
   }
 
   return (
